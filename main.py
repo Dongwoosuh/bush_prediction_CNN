@@ -166,7 +166,7 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
 
                 pred_percentage_ = pred_percentage / 10
                 grid_x1, grid_y1 = np.meshgrid(np.linspace(0, sub_axes_inverse*pred_percentage_, 16),
-                                            np.linspace(0, main_axes_inverse*pred_percentage_, 16))
+                                            np.linspace(0, main_axes_inverse, 16))
 
                 grid_x, grid_y = np.meshgrid(np.linspace(0, sub_axes_inverse, 16),
                                             np.linspace(0, main_axes_inverse, 16))
@@ -262,8 +262,8 @@ if __name__ == "__main__":
     num_DV = 12
     field_range = 16*16
     num_stiff = 6
-    # pred_percentages = [2, 3, 4, 5, 6, 7, 8, 9]
-    pred_percentages = [2, 3]
+    pred_percentages = [2, 3, 4, 5, 6, 7, 8, 9]
+    # pred_percentages = [2, 3]
     
     # result directory ------------------------------------------------------------
     
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
         result_path = '.\\results\\' + result_path
         
-        data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\0204_CNN\resource\combined_data_9_squared\combined_data_{pred_percentage}.npy'
+        data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\0204_CNN\resource\combined_data_9_rectangled_mainaxes100\combined_data_{pred_percentage}.npy'
         # data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\0204_CNN\resource\combined_data_9_squared\combined_data_{pred_percentage}.npy'
         gt_data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\0204_CNN\resource\combined_data_10.npy'
         # Device setting
