@@ -33,25 +33,17 @@ def GetDevice():
 
 def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,  save_path):
     num_samples = len(dataset.np_train_input)
-    result_file = save_path + '/loocv_results_after.csv'
-    result_file2 = save_path + '/loocv_results_before.csv'
+
     
     results_df = pd.DataFrame(columns=["Test Index", "WMAPE", "Mean"])
     results_df2 = pd.DataFrame(columns=["Test Index", "WMAPE", "Mean"])
-    results_df3 = pd.DataFrame(columns=["Test Index", "WMAPE", "Mean"])
 
-    # Initialize result file
-    # with open(result_file, 'w', newline='') as f:
-    #     writer = csv.writer(f)
-    #     writer.writerow(['Test Index', 'WMAPE'])
-
-    # with open(result_file2, 'w', newline='') as f:
-    #     writer = csv.writer(f)
-    #     writer.writerow(['Test Index', 'WMAPE'])
 
     best_val_error = float('inf')
     best_model_weights = None
 
+    models_dir = os.path.join(result_path, "saved_models")
+    
     test_set = [0,1,2,3,9,10,11,12,13,14,15,16,17,18,19]
     # test_set = [0]
     # test_set = [0,1,2,3,4,5,6,7,13,14,15,16,17,18,19,20,21,22,23]
@@ -110,6 +102,15 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 best_model_weights = model.state_dict()
 
             scheduler.step()
+        
+        model_save_path = os.path.join(models_dir, f"model_test_idx_{test_idx}.pth")
+        os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
+
+        save_dict = {
+            "model_state_dict": best_model_weights,
+            "input_scaler": input_scaler,
+            "output_scalers": output_scalers
+        }
 
         # Load the best model weights
         model.load_state_dict(best_model_weights)
@@ -118,7 +119,7 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
 
         wmape = 0
         wmape2 = 0
-        wmape3 = 0
+        # wmape3 = 0
 
         test_results1=[]
         test_results2=[]
@@ -165,7 +166,7 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 error_vmax = error.max()
 
                 pred_percentage_ = pred_percentage / 10
-                grid_x1, grid_y1 = np.meshgrid(np.linspace(0, sub_axes_inverse*pred_percentage_, 16),
+                grid_x1, grid_y1 = np.meshgrid(np.linspace(0, sub_axes_inverse, 16),
                                             np.linspace(0, main_axes_inverse, 16))
 
                 grid_x, grid_y = np.meshgrid(np.linspace(0, sub_axes_inverse, 16),
@@ -183,9 +184,9 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 ground_truth_full = np_output_data_gt[case_idx]
                 temp_wmape3 = calculate_wmape(Z_pred, ground_truth_full)
                 
-                wmape3+=temp_wmape3
-                test_results_post_pro.append(temp_wmape3)
-                print("post_processing: ",temp_wmape3)
+                # wmape3+=temp_wmape3
+                # test_results_post_pro.append(temp_wmape3)
+                # print("post_processing: ",temp_wmape3)
 
                 
                 # Plot actual and predicted polynomials
@@ -201,43 +202,43 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 plt.savefig(file_name, dpi=300)
                 # plt.show()
 
-                fig = plt.figure()
-                ax = fig.add_subplot(111, projection='3d')
-                ax.plot_surface(grid_x, grid_y, ground_truth_full, color='blue', alpha=0.5, label='Actual_100[%]')
-                ax.plot_surface(grid_x, grid_y, Z_pred, color='yellow', alpha=0.5, label='predicted-extrapolated_100[%]')
-                ax.set_xlabel('SubAxes')
-                ax.set_ylabel('MainAxes')
-                ax.set_zlabel('Value')
-                plt.legend()
-                file_name = os.path.join(folder_path, f"test_result_plot_{case_idx}_full.png")
-                plt.savefig(file_name, dpi=300)
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111, projection='3d')
+                # ax.plot_surface(grid_x, grid_y, ground_truth_full, color='blue', alpha=0.5, label='Actual_100[%]')
+                # ax.plot_surface(grid_x, grid_y, Z_pred, color='yellow', alpha=0.5, label='predicted-extrapolated_100[%]')
+                # ax.set_xlabel('SubAxes')
+                # ax.set_ylabel('MainAxes')
+                # ax.set_zlabel('Value')
+                # plt.legend()
+                # file_name = os.path.join(folder_path, f"test_result_plot_{case_idx}_full.png")
+                # plt.savefig(file_name, dpi=300)
 
 
 
         wmape = wmape/num_stiff
         wmape2 = wmape2/num_stiff
-        wmape3 = wmape3/num_stiff
+        # wmape3 = wmape3/num_stiff
 
-        new_row1 = pd.DataFrame({"Test Index": [test_idx], "WMAPE": [test_results1], "Mean": [wmape]})
-        new_row2 = pd.DataFrame({"Test Index": [test_idx], "WMAPE": [test_results2], "Mean": [wmape2]})
-        new_row3 = pd.DataFrame({"Test Index": [test_idx], "WMAPE": [test_results_post_pro], "Mean": [wmape3]})
+        # new_row1 = pd.DataFrame({"Test Index": [test_idx], "WMAPE": [test_results1], "Mean": [wmape]})
+        # new_row2 = pd.DataFrame({"Test Index": [test_idx], "WMAPE": [test_results2], "Mean": [wmape2]})
+        # new_row3 = pd.DataFrame({"Test Index": [test_idx], "WMAPE": [test_results_post_pro], "Mean": [wmape3]})
 
-        results_df = pd.concat([results_df, new_row1], ignore_index=True)
-        results_df2 = pd.concat([results_df2, new_row2], ignore_index=True)
-        results_df3 = pd.concat([results_df3, new_row3], ignore_index=True)
+        # results_df = pd.concat([results_df, new_row1], ignore_index=True)
+        # results_df2 = pd.concat([results_df2, new_row2], ignore_index=True)
+        # results_df3 = pd.concat([results_df3, new_row3], ignore_index=True)
 
         results_df.to_excel(os.path.join(save_path, "test_results_scale_O.xlsx"), index=False)
         results_df2.to_excel(os.path.join(save_path, "test_results_scale_X.xlsx"), index=False)
-        results_df3.to_excel(os.path.join(save_path, "test_results_post.xlsx"), index=False)
+        # results_df3.to_excel(os.path.join(save_path, "test_results_post.xlsx"), index=False)
 
-        # Save results
-        with open(result_file, 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow([test_idx, wmape])
+        # # Save results
+        # with open(result_file, 'a', newline='') as f:
+        #     writer = csv.writer(f)
+        #     writer.writerow([test_idx, wmape])
 
-        with open(result_file2, 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow([test_idx, wmape2])
+        # with open(result_file2, 'a', newline='') as f:
+        #     writer = csv.writer(f)
+        #     writer.writerow([test_idx, wmape2])
 
 
         # print(f'Test Index {test_idx}: WMAPE = {wmape:.2f}%')
@@ -262,8 +263,8 @@ if __name__ == "__main__":
     num_DV = 12
     field_range = 16*16
     num_stiff = 6
-    pred_percentages = [2, 3, 4, 5, 6, 7, 8, 9]
-    # pred_percentages = [2, 3]
+    pred_percentages = [4, 5, 6, 7, 8, 9]
+    pred_percentages = [10]
     
     # result directory ------------------------------------------------------------
     
@@ -278,9 +279,9 @@ if __name__ == "__main__":
 
         result_path = '.\\results\\' + result_path
         
-        data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\0204_CNN\resource\combined_data_9_rectangled_mainaxes100\combined_data_{pred_percentage}.npy'
+        data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\github\bush_prediction_CNN\resource\combined_data_{pred_percentage}.npy'
         # data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\0204_CNN\resource\combined_data_9_squared\combined_data_{pred_percentage}.npy'
-        gt_data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\0204_CNN\resource\combined_data_10.npy'
+        gt_data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\github\bush_prediction_CNN\resource\combined_data_10.npy'
         # Device setting
         device = GetDevice()
 

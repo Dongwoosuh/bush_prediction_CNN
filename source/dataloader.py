@@ -1,12 +1,14 @@
 import numpy as np
 import torch
+import ast
+import pandas as pd
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import  QuantileTransformer
 # from network.CNN import build
 import warnings
 warnings.filterwarnings(action='ignore')
 
-__all__ = ["LogScaler", "Dataset", "VEPDataset"]
+__all__ = ["LogScaler", "Dataset", "VEPDataset", "VEPDataset_inference"]
 # In[3. Data setting] #############################################################################################
 
 class LogScaler:
@@ -69,8 +71,9 @@ class VEPDataset():
         else:
             self.bush_indices_gt = None
             
-        bush_numbers = np.array([int(name.split('_')[-2]) for name in self.bush_names])
+        # bush_numbers = np.array([int(name.split('_')[-2]) for name in self.bush_names])
         bush_numbers_gt = np.array([int(name.split('_')[-1][-1]) for name in self.bush_names_gt])
+        bush_numbers = np.array([int(name.split('_')[-1][-1]) for name in self.bush_names_gt])
         # valid_indices = bush_numbers == 1
         # valid_indices = (bush_numbers == 1)| (bush_numbers == 2) | (bush_numbers == 4) |  (bush_numbers == 5)
         # valid_indices = (bush_numbers == 4) | (bush_numbers == 5)
@@ -148,6 +151,47 @@ class VEPDataset():
         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)  # Single sample for LOOCV
 
         return train_loader, test_loader, self.np_test_output_gt, self.output_scalers, self.input_scalers, self.field_range
+    
+    
+class VEPDataset_inference():
+    def __init__(self, input_path="./resource/inference/input_data.xlsx", field_range=256, num_stiffness=6):
+        self.input_path = input_path
+        # 엑셀 파일 불러오기 (경로 수정 필요)
+        df = pd.read_excel(input_path, dtype=str)  # 모든 데이터를 문자열로 로드
+        df["predictions"] = df["predictions"].apply(lambda x: np.array(ast.literal_eval(x), dtype=np.float32))
+        df.iloc[:, 3] = df.iloc[:, 3].apply(lambda x: np.array(ast.literal_eval(x), dtype=np.float32))
+        df.iloc[:, 4] = df.iloc[:, 4].apply(lambda x: np.array(ast.literal_eval(x), dtype=np.int32))
+        
+        input_data_all = []        
+        for idx in range(len(df)):
+            
+            linear_stiffness = df.iloc[idx, 3]  # (6,)
+            bush_number = df.iloc[idx, 4]  # (6,)
+            self.input_data = df.loc[idx, "predictions"]  # (8,)
+            
+            expanded_data = np.zeros((6, 10))         
+            
+            for i in range(6):
+                expanded_data[i, :8] = self.input_data  # 8개 데이터 동일하게 복사
+                expanded_data[i, 8] = linear_stiffness[i]  # 9번째 열에 값 추가
+                expanded_data[i, 9] = bush_number[i]  # 10번째 열에 값 추가
+
+            subAxes, mainAxes = get_extrapolation_range(expanded_data[:,-1], expanded_data[:,:8])
+            expanded_data = np.hstack((expanded_data, subAxes.reshape(-1, 1), mainAxes.reshape(-1, 1)))        
+            input_data_all.append(expanded_data)
+            
+        self.input_data = np.vstack(input_data_all)
+        print(self.input_data.shape)
+
+    def get_loader(self, input_scaler):
+        
+        scaled_input = input_scaler.transform(self.input_data)
+        # scaled_tensor = torch.tensor(scaled_input, dtype=torch.float32)
+        
+        dataset = Dataset(scaled_input, np.zeros((scaled_input.shape[0], 256)))
+        # for i in range(1, num_stiffness+1):
+        return DataLoader(dataset, batch_size=1, shuffle=False)
+        
     
 # In[4. LOOCV WMAPE Calculation] ############################################################################################
 
