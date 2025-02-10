@@ -176,7 +176,9 @@ class VEPDataset_inference():
                 expanded_data[i, :8] = self.input_data  # 8개 데이터 동일하게 복사
                 expanded_data[i, 8] = linear_stiffness[i]  # 9번째 열에 값 추가
                 expanded_data[i, 9] = bush_number[i]  # 10번째 열에 값 추가
-
+            
+            expanded_data[:,8] = np.log1p(expanded_data[:,8])  ## log scale로 변환 선형강성값
+            
             subAxes, mainAxes = get_extrapolation_range(expanded_data[:,-1], expanded_data[:,:8])
             expanded_data = np.hstack((expanded_data, subAxes.reshape(-1, 1), mainAxes.reshape(-1, 1)))        
             input_data_all.append(expanded_data)

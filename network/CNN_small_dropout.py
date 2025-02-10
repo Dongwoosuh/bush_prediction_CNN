@@ -5,6 +5,7 @@ torch.manual_seed(0)
 
 import pytorch_model_summary
 
+__all__ = ['build'] 
 class build(nn.Module):
 
     def __init__(self,num_DV):

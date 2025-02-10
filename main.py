@@ -4,7 +4,7 @@ import pandas as pd
 import torch
 from torch import nn
 # from network.CNN import build
-from network.CNN_small_dropout import build
+from network import build
 import matplotlib.pyplot as plt
 import csv
 from polynomial_reg import polynomial_regression, loocv_optimization, predict_on_grid
