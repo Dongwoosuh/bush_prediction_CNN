@@ -4,7 +4,7 @@ import pandas as pd
 import torch
 from torch import nn
 # from network.CNN import build
-from network.CNN_small import build
+from network.CNN_small_dropout import build
 import matplotlib.pyplot as plt
 import csv
 from polynomial_reg import polynomial_regression, loocv_optimization, predict_on_grid
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     network = 'CNN'  # 'CNN' or 'VAE'
 
     # training parameter ----------------------------------------------------------
-    epochs = 100
+    epochs = 3000
     batch = 64
     learning_rate = 0.0005
     num_DV = 12
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     num_stiff = 6
     
     ## User_defined parameters
-    pred_percentages = [4, 5] # 몇 퍼센트 데이터로 학습하실래여? [4,5], [6,7], [8,9]로 나눠서 학습
+    pred_percentages = [10] # 몇 퍼센트 데이터로 학습하실래여? [4,5], [6,7], [8,9]로 나눠서 학습
     test_set = [0,5,13,18] # 몇번 인덱스로 테스트 하실래여?
     
     # result directory ------------------------------------------------------------
@@ -287,8 +287,10 @@ if __name__ == "__main__":
 
         result_path = '.\\results\\' + result_path
         
-        data_path = rf'.\resource\combined_data_9_squared_103\combined_data_{pred_percentage}.npy'
+        # data_path = rf'.\resource\combined_data_9_squared_103\combined_data_{pred_percentage}.npy'
         # data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\0204_CNN\resource\combined_data_9_squared\combined_data_{pred_percentage}.npy'
+        data_path = rf'.\resource\combined_data_10.npy'
+
         gt_data_path = rf'.\resource\combined_data_10.npy'
         # Device setting
         device = GetDevice()
