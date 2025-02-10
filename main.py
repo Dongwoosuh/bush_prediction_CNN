@@ -65,7 +65,7 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
         dataset.update_test_idx(test_idx)
 
         # Get data loaders
-        train_loader, test_loader, np_output_data_gt, output_scalers, input_scaler, field_range = dataset.get_loader()
+        train_loader, val_loader, test_loader, np_output_data_gt, output_scalers, input_scaler, field_range = dataset.get_loader()
 
         # Initialize model
         model = build(num_DV).to(device)
@@ -89,12 +89,22 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 total_loss.backward()
                 optimizer.step()
 
-            # val_error /= len(val_loader)
-            print(f'Epoch {epoch + 1}, Validation Error: {total_loss:.10f}')
+            model.eval()
+            val_error = 0
+            with torch.no_grad():
+                for inputs, targets in val_loader:
+                    inputs, targets = inputs.to(device), targets.to(device)
+                    outputs = model(inputs)
+                    val_error += criterion(outputs, targets).item()
+                    # val_error += monotonicity_loss(outputs)
+                    # val_error += smoothness_loss(outputs)
+
+            val_error /= len(val_loader)
+            print(f'Epoch {epoch + 1}, Validation Error: {val_error:.10f}')
 
             # Save the model weights if validation error is the lowest
-            if total_loss < best_val_error:
-                best_val_error = total_loss
+            if val_error < best_val_error:
+                best_val_error = val_error
                 best_model_weights = model.state_dict()
 
             scheduler.step()
@@ -199,7 +209,7 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection='3d')
                 ax.plot_surface(grid_x1, grid_y1, ground_truth, color='blue', alpha=0.5, label=f'Actual_{pred_percentage_*100}[%]')
-                ax.plot_surface(grid_x1, grid_y1, Z_pred_1, color='red', alpha=0.5, label=f'Predicted_{pred_percentage_*100}[%]')
+                ax.plot_surface(grid_x1, grid_y1, inverse_predictions[0], color='red', alpha=0.5, label=f'Predicted_{pred_percentage_*100}[%]')
                 ax.set_xlabel('SubAxes')
                 ax.set_ylabel('MainAxes')
                 ax.set_zlabel('Value')
@@ -272,7 +282,7 @@ if __name__ == "__main__":
     
     ## User_defined parameters
     pred_percentages = [10] # 몇 퍼센트 데이터로 학습하실래여? [4,5], [6,7], [8,9]로 나눠서 학습
-    test_set = [0,5,13,18] # 몇번 인덱스로 테스트 하실래여?
+    test_set = [0,5,13,16,29,31,70,71] # 몇번 인덱스로 테스트 하실래여?
     
     # result directory ------------------------------------------------------------
     
