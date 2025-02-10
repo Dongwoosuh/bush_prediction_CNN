@@ -65,7 +65,7 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
         dataset.update_test_idx(test_idx)
 
         # Get data loaders
-        train_loader, test_loader, np_output_data_gt, output_scalers, input_scaler, field_range = dataset.get_loader()
+        train_loader, val_loader, test_loader, np_output_data_gt, output_scalers, input_scaler, field_range = dataset.get_loader()
 
         # Initialize model
         model = build(num_DV).to(device)
@@ -89,12 +89,22 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 total_loss.backward()
                 optimizer.step()
 
-            # val_error /= len(val_loader)
-            print(f'Epoch {epoch + 1}, Validation Error: {total_loss:.10f}')
+            model.eval()
+            val_error = 0
+            with torch.no_grad():
+                for inputs, targets in val_loader:
+                    inputs, targets = inputs.to(device), targets.to(device)
+                    outputs = model(inputs)
+                    val_error += criterion(outputs, targets).item()
+                    # val_error += monotonicity_loss(outputs)
+                    # val_error += smoothness_loss(outputs)
+
+            val_error /= len(val_loader)
+            print(f'Epoch {epoch + 1}, Validation Error: {val_error:.10f}')
 
             # Save the model weights if validation error is the lowest
-            if total_loss < best_val_error:
-                best_val_error = total_loss
+            if val_error < best_val_error:
+                best_val_error = val_error
                 best_model_weights = model.state_dict()
 
             scheduler.step()
@@ -278,7 +288,7 @@ if __name__ == "__main__":
     
     for pred_percentage in pred_percentages:
         if mode == 'training':
-            result_path = f'[{len(os.listdir("./results")) + 1}]_{pred_percentage}0[%]_{network}_ep{epochs}_bat{batch}_lr{learning_rate}'
+            result_path = f'[{len(os.listdir("./results")) + 1}]_{pred_percentage}0[%]_{network}_ep{epochs}_bat{batch}_lr{learning_rate}_dropout'
             if not os.path.exists(f'.\\results\\{result_path}'):
                 os.makedirs(f'.\\results\\{result_path}')
 

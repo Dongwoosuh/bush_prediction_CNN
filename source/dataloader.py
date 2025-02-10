@@ -3,6 +3,7 @@ import torch
 import ast
 import pandas as pd
 from torch.utils.data import DataLoader, Dataset
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import  QuantileTransformer
 # from network.CNN import build
 import warnings
@@ -131,26 +132,26 @@ class VEPDataset():
 
     def get_loader(self):
         
-        # # Split train data into train and validation sets
-        # train_input, val_input, train_output, val_output = train_test_split(
-        #     self.np_train_input, self.np_train_output, test_size=0.1, random_state=42
-        # )
+        # Split train data into train and validation sets
+        train_input, val_input, train_output, val_output = train_test_split(
+            self.np_train_input, self.np_train_output, test_size=0.1, random_state=2025
+        )
 
         # Scale train, validation, and test inputs
-        scaled_train_input = self.input_scalers.fit_transform(self.np_train_input)
-        # scaled_val_input = self.input_scalers.transform(val_input)
+        scaled_train_input = self.input_scalers.fit_transform(train_input)
+        scaled_val_input = self.input_scalers.transform(val_input)
         scaled_test_input = self.input_scalers.transform(self.np_test_input)
 
         # Create datasets and data loaders
-        train_dataset = Dataset(scaled_train_input, self.np_train_output)
-        # val_dataset = Dataset(scaled_val_input, val_output)
+        train_dataset = Dataset(scaled_train_input, train_output)
+        val_dataset = Dataset(scaled_val_input, val_output)
         test_dataset = Dataset(scaled_test_input, self.np_test_output)
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch, shuffle=True, drop_last=False)
-        # val_loader = DataLoader(val_dataset, batch_size=self.batch, shuffle=True, drop_last=False)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch, shuffle=True, drop_last=False)
         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)  # Single sample for LOOCV
 
-        return train_loader, test_loader, self.np_test_output_gt, self.output_scalers, self.input_scalers, self.field_range
+        return train_loader, val_loader, test_loader, self.np_test_output_gt, self.output_scalers, self.input_scalers, self.field_range
     
     
 class VEPDataset_inference():
