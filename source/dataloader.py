@@ -71,9 +71,9 @@ class VEPDataset():
         else:
             self.bush_indices_gt = None
             
-        # bush_numbers = np.array([int(name.split('_')[-2]) for name in self.bush_names])
+        bush_numbers = np.array([int(name.split('_')[-2]) for name in self.bush_names])
         bush_numbers_gt = np.array([int(name.split('_')[-1][-1]) for name in self.bush_names_gt])
-        bush_numbers = np.array([int(name.split('_')[-1][-1]) for name in self.bush_names_gt])
+        # bush_numbers = np.array([int(name.split('_')[-1][-1]) for name in self.bush_names_gt])
         # valid_indices = bush_numbers == 1
         # valid_indices = (bush_numbers == 1)| (bush_numbers == 2) | (bush_numbers == 4) |  (bush_numbers == 5)
         # valid_indices = (bush_numbers == 4) | (bush_numbers == 5)
