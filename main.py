@@ -36,7 +36,7 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
 
     
     result_file = save_path + f'/loocv_results_{pred_percentage*10}[%].csv'
-    result_file2 = save_path + '/loocv_results_postprocessed.csv'
+    result_file2 = save_path + '/loocv_results_full.csv'
     
     results_df = pd.DataFrame(columns=["Test Index", "WMAPE", "Mean"])
     results_df2 = pd.DataFrame(columns=["Test Index", "WMAPE", "Mean"])
@@ -128,12 +128,12 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
         model.eval()
 
         wmape = 0
-        wmape2 = 0
-        wmape3 = 0
+        wmape_full = 0
+        wmape_case = 0
 
-        test_results1=[]
-        test_results2=[]
-        test_results_post_pro = []
+        test_results_full=[]
+        test_results_case=[]
+        # test_results_post_pro = []
         folder_path = f'{save_path}\\visualization\\test_idx_{test_idx}'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -155,7 +155,7 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 # scaling_factor = 1
                 scaled_predict = scaling_factor * inverse_predictions
                 targets = targets.cpu().numpy()
-                temp_wmape = calculate_wmape(scaled_predict, targets)
+                # temp_wmape = calculate_wmape(scaled_predict, targets)
                 # temp_wmape2 = calculate_wmape(inverse_predictions, targets)
 
 
@@ -170,8 +170,8 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 error_vmax = error.max()
 
                 pred_percentage_ = pred_percentage / 10
-                grid_x1, grid_y1 = np.meshgrid(np.linspace(0, sub_axes_inverse*pred_percentage_, 16),
-                                            np.linspace(0, main_axes_inverse*pred_percentage_, 16))
+                grid_x1, grid_y1 = np.meshgrid(np.linspace(0, sub_axes_inverse*pred_percentage_, int(16*pred_percentage_)),
+                                            np.linspace(0, main_axes_inverse*pred_percentage_, int(16*pred_percentage_)))
 
                 grid_x, grid_y = np.meshgrid(np.linspace(0, sub_axes_inverse, 16),
                                             np.linspace(0, main_axes_inverse, 16))
@@ -179,37 +179,36 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
                 train_X1 = np.column_stack([grid_x1.ravel(), grid_y1.ravel()])
                 train_X = np.column_stack([grid_x.ravel(), grid_y.ravel()])
 
-                optimal_degree = loocv_optimization(train_X1, inverse_predictions[0,:,:].flatten())
-                poly_model, poly = polynomial_regression(train_X1, inverse_predictions[0,:,:].flatten(), optimal_degree)
-                
-                Z_pred_1 = predict_on_grid(poly_model, poly, train_X1)
-                Z_pred_1 = Z_pred_1.reshape(16, 16)
-                temp_wmape2 = calculate_wmape(Z_pred_1, ground_truth)
-                
+                optimal_degree = loocv_optimization(train_X, inverse_predictions[0,:,:].flatten())
+                poly_model, poly = polynomial_regression(train_X, inverse_predictions[0,:,:].flatten(), optimal_degree)
                 
                 Z_pred = predict_on_grid(poly_model, poly, train_X)
                 Z_pred = Z_pred.reshape(16, 16)
+                
                 ground_truth_full = np_output_data_gt[case_idx]
-                temp_wmape3 = calculate_wmape(Z_pred, ground_truth_full)
                 
-                wmape3+=float(temp_wmape3)
-                test_results_post_pro.append(float(temp_wmape3))
                 
-                test_results1.append(float(temp_wmape))
-                test_results2.append(float(temp_wmape2))
+                temp_wmape_full = calculate_wmape(Z_pred, ground_truth)
+                temp_wmape_case = calculate_wmape(Z_pred[:int(16*pred_percentage_), :int(16*pred_percentage_)], ground_truth[:int(16*pred_percentage_), :int(16*pred_percentage_)])
+                
+                
+                # test_results1.append(float(temp_wmape))
+                test_results_full.append(float(temp_wmape_full))
+                test_results_case.append(float(temp_wmape_case))
 
-                wmape += float(temp_wmape)
-                wmape2 += float(temp_wmape2)
-                print("scaled_after: ",temp_wmape)
-                print("scaled_before: ",temp_wmape2)
-                print("post_processing: ",temp_wmape3)
+                # wmape += float(temp_wmape)
+                wmape_full += float(temp_wmape_full)
+                wmape_case+=float(temp_wmape_case)
+                # print("scaled_after: ",temp_wmape)
+                print("100%_case: ",temp_wmape_full)
+                print("percentage_case: ",temp_wmape_case)
 
                 
                 # Plot actual and predicted polynomials
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection='3d')
-                ax.plot_surface(grid_x1, grid_y1, ground_truth, color='blue', alpha=0.5, label=f'Actual_{pred_percentage_*100}[%]')
-                ax.plot_surface(grid_x1, grid_y1, Z_pred_1, color='red', alpha=0.5, label=f'Predicted_{pred_percentage_*100}[%]')
+                ax.plot_surface(grid_x1, grid_y1, ground_truth[:int(16*pred_percentage_), :int(16*pred_percentage_)], color='blue', alpha=0.5, label=f'Actual_{pred_percentage_*100}[%]')
+                ax.plot_surface(grid_x1, grid_y1, Z_pred[:int(16*pred_percentage_), :int(16*pred_percentage_)], color='red', alpha=0.5, label=f'Predicted_{pred_percentage_*100}[%]')
                 ax.set_xlabel('SubAxes')
                 ax.set_ylabel('MainAxes')
                 ax.set_zlabel('Value')
@@ -220,7 +219,7 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
 
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection='3d')
-                ax.plot_surface(grid_x, grid_y, ground_truth_full, color='blue', alpha=0.5, label='Actual_100[%]')
+                ax.plot_surface(grid_x, grid_y, ground_truth, color='blue', alpha=0.5, label='Actual_100[%]')
                 ax.plot_surface(grid_x, grid_y, Z_pred, color='yellow', alpha=0.5, label='predicted-extrapolated_100[%]')
                 ax.set_xlabel('SubAxes')
                 ax.set_ylabel('MainAxes')
@@ -231,30 +230,30 @@ def train_model(device, dataset, epochs, learning_rate, num_DV, pred_percentage,
 
 
 
-        wmape = wmape/num_stiff
-        wmape2 = wmape2/num_stiff
-        wmape3 = wmape3/num_stiff
+        # wmape = wmape/num_stiff
+        wmape_case = wmape_case/num_stiff
+        wmape_full = wmape_full/num_stiff
 
-        new_row1 = pd.DataFrame({"Test Index": test_idx, "WMAPE": [test_results1], "Mean": wmape} )
-        new_row2 = pd.DataFrame({"Test Index": test_idx, "WMAPE": [test_results2], "Mean": wmape2})
-        new_row3 = pd.DataFrame({"Test Index": test_idx, "WMAPE": [test_results_post_pro], "Mean": wmape3})
+        # new_row1 = pd.DataFrame({"Test Index": test_idx, "WMAPE": [test_results1], "Mean": wmape} )
+        new_row2 = pd.DataFrame({"Test Index": test_idx, "WMAPE": [test_results_case], "Mean": wmape_case})
+        new_row3 = pd.DataFrame({"Test Index": test_idx, "WMAPE": [test_results_full], "Mean": wmape_full})
 
-        results_df = pd.concat([results_df, new_row1], ignore_index=True)
+        # results_df = pd.concat([results_df, new_row1], ignore_index=True)
         results_df2 = pd.concat([results_df2, new_row2], ignore_index=True)
         results_df3 = pd.concat([results_df3, new_row3], ignore_index=True)
 
         # results_df.to_excel(os.path.join(save_path, "test_results_scale_O.xlsx"), index=False)
         results_df2.to_excel(os.path.join(save_path, f"test_results_{pred_percentage*10}[%].xlsx"), index=False)
-        results_df3.to_excel(os.path.join(save_path, "test_results_post.xlsx"), index=False)
+        results_df3.to_excel(os.path.join(save_path, "test_results_full.xlsx"), index=False)
 
         # Save results
         with open(result_file, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([test_idx, wmape2])
+            writer.writerow([test_idx, wmape_case])
 
         with open(result_file2, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([test_idx, wmape3])
+            writer.writerow([test_idx, wmape_full])
 
     
         # print(f'Test Index {test_idx}: WMAPE = {wmape:.2f}%')
@@ -281,8 +280,8 @@ if __name__ == "__main__":
     num_stiff = 6
     
     ## User_defined parameters
-    pred_percentages = [4, 5] # 몇 퍼센트 데이터로 학습하실래여? [4,5], [6,7], [8,9]로 나눠서 학습
-    test_set = [0,5,13,18] # 몇번 인덱스로 테스트 하실래여?
+    pred_percentages = [4, 5, 6, 7, 8] # 몇 퍼센트 데이터로 학습하실래여? [4,5], [6,7], [8,9]로 나눠서 학습
+    test_set = [0,5,13,18,29,31,70,71] # 몇번 인덱스로 테스트 하실래여?
     
     # result directory ------------------------------------------------------------
     
@@ -297,7 +296,7 @@ if __name__ == "__main__":
 
         result_path = '.\\results\\' + result_path
         
-        data_path = rf'.\resource\combined_data_9_squared_103\combined_data_{pred_percentage}.npy'
+        data_path = rf'.\resource\\combined_data_10.npy'
         # data_path = rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\0204_CNN\resource\combined_data_9_squared\combined_data_{pred_percentage}.npy'
         gt_data_path = rf'.\resource\combined_data_10.npy'
         # Device setting
