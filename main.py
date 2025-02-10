@@ -4,7 +4,7 @@ import pandas as pd
 import torch
 from torch import nn
 # from network.CNN import build
-from network.CNN_small import build
+from network.CNN_small_dropout import build
 import matplotlib.pyplot as plt
 import csv
 from polynomial_reg import polynomial_regression, loocv_optimization, predict_on_grid
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     network = 'CNN'  # 'CNN' or 'VAE'
 
     # training parameter ----------------------------------------------------------
-    epochs = 100
+    epochs = 3000
     batch = 64
     learning_rate = 0.0005
     num_DV = 12
