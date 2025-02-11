@@ -96,20 +96,21 @@ def test_model(model, device, input_scaler, output_scalers, test_dataset, gt_dat
               
           fig = plt.figure()
           ax = fig.add_subplot(111, projection='3d')
-          ax.plot_surface(grid_x1, grid_y1, gt_dataset[bush_idx*6 + idx][:int(16*pred_percengtage),:int(16*pred_percengtage)], color='blue', alpha=0.5, label='Actual_50[%]')
-          ax.plot_surface(grid_x1, grid_y1, Z_pred[:int(16*pred_percengtage),:int(16*pred_percengtage)], color='yellow', alpha=0.5, label='predicted-extrapolated_50[%]')
+          ax.plot_surface(grid_x1, grid_y1, gt_dataset[bush_idx*6 + idx][:int(16*pred_percengtage),:int(16*pred_percengtage)], color='blue', alpha=0.5, label=f'Ground_Truth[{pred_percengtage*100}%]')
+          ax.plot_surface(grid_x1, grid_y1, Z_pred[:int(16*pred_percengtage),:int(16*pred_percengtage)], color='red', alpha=0.5, label=f'prediction[{pred_percengtage*100}%]')
           ax.set_xlabel('SubAxes')
           ax.set_ylabel('MainAxes')
           ax.set_zlabel('Value')
+
           plt.legend()
-          file_name = os.path.join(folder_path, f"test_result_plot_{idx}_post_50%.png")
+          file_name = os.path.join(folder_path, f"test_result_plot_{idx}_{pred_percengtage*100}%.png")
           plt.savefig(file_name, dpi=300)
           print(f"Saved: {file_name}")
 
           fig = plt.figure()
           ax = fig.add_subplot(111, projection='3d')
-          ax.plot_surface(grid_x, grid_y, gt_dataset[bush_idx*6 + idx], color='blue', alpha=0.5, label='Actual_100[%]')
-          ax.plot_surface(grid_x, grid_y, Z_pred, color='yellow', alpha=0.5, label='predicted-extrapolated_100[%]')
+          ax.plot_surface(grid_x, grid_y, gt_dataset[bush_idx*6 + idx], color='blue', alpha=0.5, label='Ground_Truth[100%]')
+          ax.plot_surface(grid_x, grid_y, Z_pred, color='red', alpha=0.5, label='Predicton[100%]')
           ax.set_xlabel('SubAxes')
           ax.set_ylabel('MainAxes')
           ax.set_zlabel('Value')
@@ -125,12 +126,12 @@ def test_model(model, device, input_scaler, output_scalers, test_dataset, gt_dat
           wmape_full_range_list.append(float(wmape1_acc))
           wmape_per_percent_list.append(float(wmape2_acc))
 
-        new_row = pd.DataFrame({"stiffness_num": idx+1, "40%": [wmape_per_percent_list[0]], "50%": [wmape_per_percent_list[1]], "60%": [wmape_per_percent_list[2]], "70%": [wmape_per_percent_list[3]], "80%": [wmape_per_percent_list[4]], "100%": [wmape_full_range_list[0]]})
+        new_row = pd.DataFrame({"stiffness_num": idx+1, "50%": [wmape_per_percent_list[0]], "60%": [wmape_per_percent_list[1]], "70%": [wmape_per_percent_list[2]], "80%": [wmape_per_percent_list[3]], "90%": [wmape_per_percent_list[4]], "100%": [wmape_full_range_list[0]]})
           
         result_df = pd.concat([result_df, new_row], ignore_index=True)
         
     
-    mean_row =  pd.DataFrame({"stiffness_num": 'mean', "40%": [result_df['40%'].mean()], "50%": [result_df['50%'].mean()], "60%": [result_df['60%'].mean()], "70%": [result_df['70%'].mean()], "80%": [result_df['80%'].mean()], '100%': [result_df['100%'].mean()]})
+    mean_row =  pd.DataFrame({"stiffness_num": 'mean', "50%": [result_df['50%'].mean()], "60%": [result_df['60%'].mean()], "70%": [result_df['70%'].mean()], "80%": [result_df['80%'].mean()], "90%": [result_df['90%'].mean()], '100%': [result_df['100%'].mean()]})
     result_df = pd.concat([result_df, mean_row], ignore_index=True)
     result_df.to_csv(os.path.join(save_path, f"result_df_bush[{bush_idx}].csv"), index=False)
     
@@ -151,13 +152,13 @@ def test_model(model, device, input_scaler, output_scalers, test_dataset, gt_dat
 
 if __name__ == "__main__":
     # 저장된 경로
-    save_path = r"E:\Dongwoo\TeamWork\Hyundai_bush_2\github\bush_prediction_CNN\results\inference_참설계변수"
-    # save_path = r"E:\Dongwoo\TeamWork\Hyundai_bush_2\github\bush_prediction_CNN\results\inference_예측설계변수"
+    # save_path = r"E:\Dongwoo\TeamWork\Hyundai_bush_2\github\bush_prediction_CNN\results\inference_참설계변수"
+    save_path = r"E:\Dongwoo\TeamWork\Hyundai_bush_2\github\bush_prediction_CNN\results\inference_예측설계변수"
     # target_bush = ('06_04_NX4', 0)
     # target_bush = ('06_11_MQ4', 5)
     # target_bush = ('G_06_04_IK', 13)
     target_bushes = [('06_04_NX4', 0), ('06_11_MQ4', 5), ('G_06_04_IK', 13) ,('G_11_01_IK', 18)]
-    target_bushes = [('06_04_NX4', 0), ('06_11_MQ4', 5), ('G_06_04_IK', 13) ]
+    # target_bushes = [('06_04_NX4', 0), ('06_11_MQ4', 5), ('G_06_04_IK', 13) ]
     for target_bush in target_bushes:
       # input_path = f'./resource/inference/{target_bush[0]}_.xlsx'
       input_path = f'./resource/inference/{target_bush[0]}.xlsx'
