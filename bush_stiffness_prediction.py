@@ -90,11 +90,13 @@ def model_test(
         
         wmape_per_percent_list, wmape_full_range_list = results_extraction(input_unscaled, prediction, gt_output, pred_percentages=pred_percentages, save_path=save_path)
         
-        new_row = pd.DataFrame({"stiffness_num": idx+1, "40%": wmape_per_percent_list[0], "50%": wmape_per_percent_list[1], "60%": wmape_per_percent_list[2], "70%": wmape_per_percent_list[3], "80%": wmape_per_percent_list[4], "90%": wmape_per_percent_list[5], "100%": wmape_full_range_list[0]}, index=[0])
+        new_row = pd.DataFrame({"stiffness_num": idx+1, "40%": wmape_per_percent_list[0], "50%": wmape_per_percent_list[1], "60%": wmape_per_percent_list[2],
+                                "70%": wmape_per_percent_list[3], "80%": wmape_per_percent_list[4], "90%": wmape_per_percent_list[5], "100%": wmape_full_range_list[0]}, index=[0])
         
         result_df = pd.concat([result_df, new_row], ignore_index=True) 
         
-    mean_row = pd.DataFrame({"stiffness_num": "Mean", "40%": result_df["40%"].mean(), "50%": result_df["50%"].mean(), "60%": result_df["60%"].mean(), "70%": result_df["70%"].mean(), "80%": result_df["80%"].mean(), "90%": result_df["90%"].mean(), "100%": result_df["100%"].mean()}, index=[0])   
+    mean_row = pd.DataFrame({"stiffness_num": "Mean", "40%": result_df["40%"].mean(), "50%": result_df["50%"].mean(), "60%": result_df["60%"].mean(),
+                             "70%": result_df["70%"].mean(), "80%": result_df["80%"].mean(), "90%": result_df["90%"].mean(), "100%": result_df["100%"].mean()}, index=[0])   
     result_df = pd.concat([result_df, mean_row], ignore_index=True)
     
     result_df.to_csv(os.path.join(model_path, "result.csv"), index=False)    
