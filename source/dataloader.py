@@ -9,7 +9,7 @@ from sklearn.preprocessing import  QuantileTransformer
 import warnings
 warnings.filterwarnings(action='ignore')
 
-__all__ = ["LogScaler", "Dataset", "VEPDataset", "VEPDataset_inference"]
+__all__ = ["LogScaler", "Dataset", "BushDataset"]
 # In[3. Data setting] #############################################################################################
 
 class LogScaler:
@@ -39,7 +39,7 @@ class Dataset(Dataset):
 
         return x, y
 
-class VEPDataset():
+class BushDataset():
     def __init__(self, batch, output_path, gt_path, field_range, num_stiffness):
         self.batch = batch
         self.test_idx = 0  # Default value

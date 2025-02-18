@@ -24,6 +24,7 @@ class MLP():
         hidden_features: int,
         num_layers: int,
         drop_out: float,
+        hidden_activation: str,
     ):
         self.device = device
         
@@ -32,6 +33,7 @@ class MLP():
             "hidden_features": hidden_features,
             "num_layers": num_layers,
             "drop_out": drop_out,
+            "hidden_activation": hidden_activation,
         }
         
         self.model = MLPNN(
@@ -39,7 +41,7 @@ class MLP():
             node_num=hidden_features,
             output_size=256,
             num_layers=num_layers,
-            hidden_activation="ReLU",
+            hidden_activation= hidden_activation,
             output_activation="None",
             dropout_rate=drop_out,
         ).to(device)

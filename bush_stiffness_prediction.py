@@ -52,8 +52,9 @@ def train_model(
         hparams = {
             "num_DV" : 12,
             "hidden_features" : 128,
-            "num_layers" : 3,
-            "drop_out" : 0.1
+            "num_layers" : 5,
+            "drop_out" : 0.3,
+            "hidden_activation" : "SiLU"
         }
     else:
         raise ValueError(f"Invalid model type: {model_type}")
@@ -122,7 +123,7 @@ def model_test(
         
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_epochs", type=int, default=10)
+    parser.add_argument("--n_epochs", type=int, default=3000)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--model_type", type=str, default="MLP")
@@ -130,17 +131,17 @@ if __name__ == "__main__" :
     
     data_path = rf'./resource/combined_data_10.npy'
     gt_data_path = rf'./resource/combined_data_10.npy'
-    # test_set = [0,5,13,18,29,31,70,71] # 몇번 인덱스로 테스트 하실래여?
-    test_set = [0] # 몇번 인덱스로 테스트 하실래여?
+    test_set = [0,5,13,18,29,31,70,71] # 몇번 인덱스로 테스트 하실래여?
+    # test_set = [0] # 몇번 인덱스로 테스트 하실래여?
     result_path = pathlib.Path("results") / f"{args.model_type}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    # for test_idx in test_set:
-    #     dataset = VEPDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
-    #     dataset.update_test_idx(test_idx)
-    #     train_model(args.model_type, dataset, args.n_epochs, args.batch_size, args.lr, test_idx=test_idx, save_path=result_path)
+    for test_idx in test_set:
+        dataset = BushDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
+        dataset.update_test_idx(test_idx)
+        train_model(args.model_type, dataset, args.n_epochs, args.batch_size, args.lr, test_idx=test_idx, save_path=result_path)
         
     
-    for test_idx in test_set:
-        dataset = VEPDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
-        dataset.update_test_idx(test_idx)
-        model_test(args.model_type, dataset=dataset, test_idx=test_idx, model_path=rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\github\bush_prediction_CNN\results\MLP_20250218_205631\bush_idx[0]')
+    # for test_idx in test_set:
+    #     dataset = BushDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
+    #     dataset.update_test_idx(test_idx)
+    #     model_test(args.model_type, dataset=dataset, test_idx=test_idx, model_path=rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\github\bush_stiffness_prediction\results\MLP_20250218_211141\bush_idx[{test_idx}]')
