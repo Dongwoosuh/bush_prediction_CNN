@@ -46,7 +46,7 @@ def train_model(
         "num_DV" : 12
     }
     
-    ml_model = build_model("CNN", **hparams)
+    ml_model = build_model(model_type=model_type, **hparams)
 
     logger.info(f"LOOCV Iteration: Bush {test_idx} started")
 
@@ -119,13 +119,13 @@ if __name__ == "__main__" :
     test_set = [0] # 몇번 인덱스로 테스트 하실래여?
     result_path = pathlib.Path("results") / f"{args.model_type}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    # for test_idx in test_set:
-    #     dataset = VEPDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
-    #     dataset.update_test_idx(test_idx)
-    #     train_model(args.model_type, dataset, args.n_epochs, args.batch_size, args.lr, test_idx=test_idx, save_path=result_path)
-        
-    
     for test_idx in test_set:
         dataset = VEPDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
         dataset.update_test_idx(test_idx)
-        model_test(args.model_type, dataset=dataset, test_idx=test_idx, model_path=rf'/Users/luke/Desktop/TeamWork/hyundai_bush_2/bush_prediction_CNN/results/CNN_20250217_222226/bush_idx[0]')
+        train_model(args.model_type, dataset, args.n_epochs, args.batch_size, args.lr, test_idx=test_idx, save_path=result_path)
+        
+    
+    # for test_idx in test_set:
+    #     dataset = VEPDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
+    #     dataset.update_test_idx(test_idx)
+    #     model_test(args.model_type, dataset=dataset, test_idx=test_idx, model_path=rf'/Users/luke/Desktop/TeamWork/hyundai_bush_2/bush_prediction_CNN/results/CNN_20250217_222226/bush_idx[0]')

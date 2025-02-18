@@ -38,7 +38,7 @@ class CNN():
         
         
         
-        train_loader, val_loader, test_loader, np_output_data_gt, output_scalers, input_scaler, field_range = dataset.get_loader()
+        train_loader, val_loader, _, _, output_scalers, input_scaler, _ = dataset.get_loader()
 
         self.input_scaler = input_scaler
         self.output_scalers = output_scalers
