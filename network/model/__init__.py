@@ -1,1 +1,1 @@
-from .CNN_small_dropout import CNN_small_dropout
+from .model import CNN_small_dropout, MLPNN

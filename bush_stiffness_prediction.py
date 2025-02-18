@@ -27,6 +27,8 @@ def build_model(model_type:str, **hparams):
         
     if model_type == "CNN":
         model = CNN(device, **hparams)
+    elif model_type == "MLP":
+        model = MLP(device, **hparams)
     else:
         raise ValueError(f"Invalid model type: {model_type}")
     
@@ -42,9 +44,20 @@ def train_model(
     save_path: str
     ):
     
-    hparams = {
-        "num_DV" : 12
-    }
+    if model_type == "CNN":
+        hparams = {
+            "num_DV" : 12
+        }
+    elif model_type == "MLP":
+        hparams = {
+            "num_DV" : 12,
+            "hidden_features" : 128,
+            "num_layers" : 3,
+            "drop_out" : 0.1
+        }
+    else:
+        raise ValueError(f"Invalid model type: {model_type}")
+    
     
     ml_model = build_model(model_type=model_type, **hparams)
 
@@ -69,6 +82,8 @@ def model_test(
         
     if model_type == "CNN":
         model = CNN.load(model_path, device)
+    elif model_type == "MLP":
+        model = MLP.load(model_path, device)
     else:
         raise ValueError(f"Invalid model type: {model_type}")
     
@@ -110,7 +125,7 @@ if __name__ == "__main__" :
     parser.add_argument("--n_epochs", type=int, default=10)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--model_type", type=str, default="CNN")
+    parser.add_argument("--model_type", type=str, default="MLP")
     args = parser.parse_args()
     
     data_path = rf'./resource/combined_data_10.npy'
@@ -119,13 +134,13 @@ if __name__ == "__main__" :
     test_set = [0] # 몇번 인덱스로 테스트 하실래여?
     result_path = pathlib.Path("results") / f"{args.model_type}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    for test_idx in test_set:
-        dataset = VEPDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
-        dataset.update_test_idx(test_idx)
-        train_model(args.model_type, dataset, args.n_epochs, args.batch_size, args.lr, test_idx=test_idx, save_path=result_path)
-        
-    
     # for test_idx in test_set:
     #     dataset = VEPDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
     #     dataset.update_test_idx(test_idx)
-    #     model_test(args.model_type, dataset=dataset, test_idx=test_idx, model_path=rf'/Users/luke/Desktop/TeamWork/hyundai_bush_2/bush_prediction_CNN/results/CNN_20250217_222226/bush_idx[0]')
+    #     train_model(args.model_type, dataset, args.n_epochs, args.batch_size, args.lr, test_idx=test_idx, save_path=result_path)
+        
+    
+    for test_idx in test_set:
+        dataset = VEPDataset(batch=args.batch_size, output_path=data_path, gt_path=gt_data_path, field_range=256, num_stiffness=6)
+        dataset.update_test_idx(test_idx)
+        model_test(args.model_type, dataset=dataset, test_idx=test_idx, model_path=rf'E:\Dongwoo\TeamWork\Hyundai_bush_2\github\bush_prediction_CNN\results\MLP_20250218_205631\bush_idx[0]')

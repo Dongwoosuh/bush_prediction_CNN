@@ -5,7 +5,7 @@ torch.manual_seed(0)
 
 import pytorch_model_summary
 
-__all__ = ['CNN_small_dropout'] 
+__all__ = ['CNN_small_dropout', 'MLPNN'] 
 class CNN_small_dropout(nn.Module):
 
     def __init__(self,num_DV):
@@ -88,8 +88,64 @@ class CNN_small_dropout(nn.Module):
         x = self.conv_last(x).view([-1,16,16])
         return x
     
+    
+    
+class BaseMLP(nn.Module):
+    def __init__(self):
+        super(BaseMLP, self).__init__()
+
+    def get_activation(self, name):
+        activations = {
+            "SiLU": nn.SiLU(),
+            "Sigmoid": nn.Sigmoid(),
+            "Tanh": nn.Tanh(),
+            "ELU": nn.ELU(),
+            "LeakyReLU": nn.LeakyReLU(),
+            "Mish": nn.Mish(),
+            "SeLU": nn.SELU(),
+            "ReLU": nn.ReLU(),
+            "ReLU6": nn.ReLU6(),
+            "None": nn.Identity(),
+        }
+        if name in activations:
+            return activations[name]
+        raise ValueError(f"Invalid activation: {name}")
+    
+    
+    
+class MLPNN(BaseMLP):
+    def __init__(
+        self,
+        input_size,
+        node_num,
+        output_size,
+        num_layers,
+        hidden_activation,
+        output_activation,
+        dropout_rate,
+    ):
+        super(MLPNN, self).__init__()
+        self.layers = nn.ModuleList()
+
+        self.layers.append(nn.Linear(input_size, node_num))
+        self.layers.append(self.get_activation(hidden_activation))
+        self.layers.append(nn.Dropout(dropout_rate))
+
+        for _ in range(num_layers - 1):
+            self.layers.append(nn.Linear(node_num, node_num))
+            self.layers.append(self.get_activation(hidden_activation))
+            self.layers.append(nn.Dropout(dropout_rate))
+
+        self.layers.append(nn.Linear(node_num, output_size))
+        self.layers.append(self.get_activation(output_activation))
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+    
 if __name__ == "__main__": 
-    model = build(num_DV=12)
+    model = CNN_small_dropout(num_DV=12)
     input_tensor = torch.zeros(1, 12)  # (batch_size, in_features)
     model_summary = pytorch_model_summary.summary(model, input_tensor, show_input=True)
     print(model_summary)
