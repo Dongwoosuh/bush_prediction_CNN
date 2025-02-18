@@ -1,6 +1,6 @@
 import os
 import matplotlib.pyplot as plt
-from polynomial_reg import *
+from source.polynomial_reg import *
 from source import calculate_wmape
 __all__ = ['results_extraction'] 
 
